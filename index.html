@@ -69,6 +69,14 @@ button{cursor:pointer;border:none;background:none;color:inherit;}
 .goal-label{font-size:11px;color:var(--accent);letter-spacing:1.5px;font-weight:700;}
 .goal-text{font-family:var(--serif);font-size:20px;font-weight:800;color:var(--t1);margin-top:7px;line-height:1.35;}
 .goal-empty{font-size:13px;color:var(--t3);margin-top:7px;}
+.goals-list{background:var(--card);border-radius:16px;padding:2px 16px;margin-bottom:18px;}
+.goal-line{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line);text-align:left;width:100%;background:none;}
+.goal-line:last-child{border-bottom:none;}
+.goal-line .glb{flex-shrink:0;width:72px;font-size:11px;font-weight:700;color:var(--accent);}
+.goal-line .glt{flex:1;min-width:0;font-size:14px;color:var(--t1);line-height:1.4;}
+.goal-line .glt.empty{color:var(--t4);font-size:13px;}
+.goal-line .glg{flex-shrink:0;color:var(--t4);font-size:15px;}
+.goal-line:active{opacity:.6;}
 
 .sec-head{display:flex;justify-content:space-between;align-items:center;margin:20px 2px 12px;}
 .sec-head .t{font-family:var(--serif);font-size:17px;font-weight:700;}
@@ -270,6 +278,7 @@ h1,h2{font-family:var(--serif);}
     <div class="goal-label">오늘 목표</div>
     <div class="goal-empty" id="goal-body">목표를 설정해주세요</div>
   </button>
+  <div class="goals-list" id="goals-list"></div>
 
   <div class="sec-head"><span class="t">오늘의 루틴</span><span class="p" id="routine-prog"></span></div>
   <div class="rmode">
@@ -300,8 +309,7 @@ h1,h2{font-family:var(--serif);}
     </div>
   </div>
 
-  <button class="btn-wide" id="btn-gen-eng">오늘의 영어 문장 생성</button>
-  <button class="btn-wide sub" id="btn-eng-manual" style="margin-top:8px;">Claude로 직접 만들기</button>
+  <button class="btn-wide" id="btn-gen-eng">오늘의 영어 문장 만들기</button>
 
   <div class="sec-head"><span class="t">작성한 문장</span></div>
   <div class="day-strip" id="eng-strip"></div>
@@ -395,8 +403,11 @@ h1,h2{font-family:var(--serif);}
 <div class="modal" id="m-goal">
   <div class="sheet">
     <div class="grip"></div>
-    <h2>오늘 목표</h2>
-    <div class="field"><label>목표를 입력하세요</label><textarea id="goal-input" placeholder="예: 서브 정확도 70% 이상" style="min-height:80px;"></textarea></div>
+    <h2>목표 설정</h2>
+    <div class="field"><label>오늘 목표</label><textarea id="gl-day" placeholder="예: 서브 정확도 70% 이상" style="min-height:60px;"></textarea></div>
+    <div class="field"><label id="gl-month-label">이번 달 목표</label><textarea id="gl-month" placeholder="예: 백핸드 안정화" style="min-height:60px;"></textarea></div>
+    <div class="field"><label id="gl-year-label">올해 목표</label><textarea id="gl-year" placeholder="예: 전국대회 16강" style="min-height:60px;"></textarea></div>
+    <div class="field"><label>최종 목표</label><textarea id="gl-final" placeholder="예: 국가대표 · 프로 진출" style="min-height:60px;"></textarea></div>
     <button class="btn-wide" id="goal-save">저장</button>
   </div>
 </div>
@@ -413,8 +424,11 @@ h1,h2{font-family:var(--serif);}
         <button data-k="month">이번 달</button>
       </div>
     </div>
-    <button class="btn-wide" id="coach-gen">분석 생성</button>
-    <div id="coach-result" style="margin-top:16px;"></div>
+    <div class="info-box">① Claude 열기를 누르면 훈련 기록이 복사되고 Claude가 열려요.<br>② Claude의 분석 결과를 복사해서 ③ 아래에 붙여넣고 저장하세요.</div>
+    <button class="btn-wide" id="coach-open">① Claude 열기 (기록 복사)</button>
+    <div class="field" style="margin-top:14px;"><label>③ Claude 분석 결과 붙여넣기</label><textarea id="coach-paste" placeholder="Claude가 준 분석 내용을 여기에 붙여넣으세요..." style="min-height:120px;"></textarea></div>
+    <button class="btn-wide sub" id="coach-paste-clip">클립보드에서 붙여넣기</button>
+    <button class="btn-wide" id="coach-save" style="margin-top:10px;">저장</button>
   </div>
 </div>
 
@@ -429,15 +443,40 @@ h1,h2{font-family:var(--serif);}
   </div>
 </div>
 
-<!-- 영어 붙여넣기 -->
+<!-- 영어 만들기 -->
 <div class="modal" id="m-eng-paste">
   <div class="sheet">
     <div class="grip"></div>
-    <h2>영어 문장 붙여넣기</h2>
-    <div class="info-box">Claude에서 받은 JSON 결과를 아래에 붙여넣고 저장하세요.</div>
-    <div class="field"><textarea id="eng-paste" placeholder='[{"en":"...","ko":"...","words":[...]}]' style="min-height:140px;"></textarea></div>
-    <button class="btn-wide" id="eng-paste-btn">클립보드에서 붙여넣기</button>
-    <button class="btn-ghost" id="eng-paste-save">저장</button>
+    <h2>오늘의 영어 만들기</h2>
+    <div class="field"><label>문법 단원</label>
+      <select id="eng-unit">
+        <option value="random">랜덤 (다양하게)</option>
+        <option value="be동사·일반동사">be동사·일반동사</option>
+        <option value="현재·과거·미래 시제">현재·과거·미래 시제</option>
+        <option value="현재진행·과거진행">현재진행·과거진행</option>
+        <option value="현재완료">현재완료</option>
+        <option value="조동사">조동사 (can/will/must 등)</option>
+        <option value="to부정사">to부정사</option>
+        <option value="동명사">동명사</option>
+        <option value="비교급·최상급">비교급·최상급</option>
+        <option value="수동태">수동태</option>
+        <option value="관계대명사">관계대명사</option>
+        <option value="접속사">접속사</option>
+        <option value="가정법">가정법</option>
+      </select>
+    </div>
+    <div class="field"><label>문장 개수</label>
+      <div class="seg" id="eng-count">
+        <button data-v="5" class="on">5문장</button>
+        <button data-v="8">8문장</button>
+        <button data-v="10">10문장</button>
+      </div>
+    </div>
+    <div class="info-box">① Claude 열기를 누르면 프롬프트가 복사되고 Claude가 열려요.<br>② Claude의 결과(JSON)를 복사해 ③ 아래에 붙여넣고 저장하세요.</div>
+    <button class="btn-wide" id="eng-open-claude">① Claude 열기 (프롬프트 복사)</button>
+    <div class="field" style="margin-top:14px;"><label>③ 결과 붙여넣기</label><textarea id="eng-paste" placeholder='[{"en":"...","ko":"...","words":[...]}]' style="min-height:120px;"></textarea></div>
+    <button class="btn-wide sub" id="eng-paste-btn">클립보드에서 붙여넣기</button>
+    <button class="btn-wide" id="eng-paste-save" style="margin-top:10px;">저장</button>
   </div>
 </div>
 
@@ -465,7 +504,7 @@ const K={profile:'tj-profile',logs:'tj-logs',eng:'tj-eng',coach:'tj-coach',guard
   routines:'tj-routines',rchecks:'tj-rchecks',goals:'tj-goals',dailyGoals:'tj-dailyGoals',matchMode:'tj-matchMode'};
 
 let profile=null,logs=[],engSets=[],coachNotes=[],guardian=null,
-    routines={},routineChecks={},goals={final:''},dailyGoals={},matchMode=false;
+    routines={},routineChecks={},goals={month:'',year:'',final:''},dailyGoals={},matchMode=false;
 let editingJournalId=null,selectedEngDay='',calMonth=new Date(),
     editProfileMode=false,rmSelectedDay='Mon',rmDraft={};
 
@@ -552,7 +591,8 @@ function initData(){
   guardian=load(K.guardian);
   routines=load(K.routines)||{};
   routineChecks=load(K.rchecks)||{};
-  goals=load(K.goals)||{final:''};
+  goals=Object.assign({month:'',year:'',final:''},load(K.goals)||{});
+  if(profile&&profile.goal&&!goals.final)goals.final=profile.goal;
   dailyGoals=load(K.dailyGoals)||{};
   matchMode=!!load(K.matchMode);
   selectedEngDay=todayISO();
@@ -635,21 +675,48 @@ function renderAll(){
 }
 
 /* ========== GOAL ========== */
+function monthLabel(){return (new Date().getMonth()+1)+'월 목표';}
+function yearLabel(){return new Date().getFullYear()+'년 목표';}
 function renderGoal(){
   const g=dailyGoals[todayISO()];
   const body=$('#goal-body');
   if(g){body.className='goal-text';body.textContent=g;}
   else{body.className='goal-empty';body.textContent='목표를 설정해주세요';}
+  // 월/년/최종 목표 리스트
+  const rows=[
+    {b:monthLabel(),v:goals.month},
+    {b:yearLabel(),v:goals.year},
+    {b:'최종 목표',v:goals.final}
+  ];
+  $('#goals-list').innerHTML=rows.map(r=>`
+    <button class="goal-line">
+      <span class="glb">${r.b}</span>
+      <span class="glt ${r.v?'':'empty'}">${r.v?esc(r.v):'눌러서 등록'}</span>
+      <span class="glg">›</span>
+    </button>`).join('');
+  $$('#goals-list .goal-line').forEach(el=>el.onclick=openGoal);
 }
 function openGoal(){
-  $('#goal-input').value=dailyGoals[todayISO()]||'';
+  $('#gl-day').value=dailyGoals[todayISO()]||'';
+  $('#gl-month').value=goals.month||'';
+  $('#gl-year').value=goals.year||'';
+  $('#gl-final').value=goals.final||'';
+  $('#gl-month-label').textContent=monthLabel();
+  $('#gl-year-label').textContent=yearLabel();
   openModal('m-goal');
 }
 function saveGoal(){
-  const v=$('#goal-input').value.trim();
-  if(v)dailyGoals[todayISO()]=v; else delete dailyGoals[todayISO()];
+  const dv=$('#gl-day').value.trim();
+  if(dv)dailyGoals[todayISO()]=dv; else delete dailyGoals[todayISO()];
+  goals={
+    month:$('#gl-month').value.trim(),
+    year:$('#gl-year').value.trim(),
+    final:$('#gl-final').value.trim()
+  };
   save(K.dailyGoals,dailyGoals);
-  closeModal('m-goal');renderGoal();toast('목표를 저장했어요');
+  save(K.goals,goals);
+  if(profile){profile.goal=goals.final;save(K.profile,profile);}
+  closeModal('m-goal');renderGoal();renderProfile();toast('목표를 저장했어요');
 }
 
 /* ========== ROUTINE ========== */
@@ -825,14 +892,31 @@ function deleteCoach(id){
   save(K.coach,coachNotes);renderCoachList();renderSearch();
 }
 function openCoach(){
-  $('#coach-result').innerHTML='';
+  $('#coach-paste').value='';
   $$('#coach-type button').forEach((b,i)=>b.classList.toggle('on',i===0));
   openModal('m-coach');
 }
-async function generateCoaching(){
+function buildCoachPrompt(){
   const kind=($$('#coach-type button.on')[0]||{}).dataset?.k||'today';
-  let recent;
   const today=todayISO();
+  let recent;
+  if(kind==='today')recent=logs.filter(l=>l.date===today);
+  else{
+    const days=kind==='week'?7:30;
+    const cut=new Date();cut.setHours(0,0,0,0);cut.setDate(cut.getDate()-days);
+    recent=logs.filter(l=>new Date(l.date+'T00:00:00')>=cut);
+  }
+  const summary=recent.length?recent.map(l=>`- ${l.date} | ${l.name} | ${l.duration}분 | 컨디션 ${l.condition}/5 | ${(l.tags||[]).join(',')}${l.notes?' | 메모: '+l.notes:''}`).join('\n'):'(훈련 기록 없음)';
+  let goalCtx='';
+  if(goals.final)goalCtx+=`\n최종 목표: ${goals.final}`;
+  if(goals.year)goalCtx+=`\n올해 목표: ${goals.year}`;
+  if(goals.month)goalCtx+=`\n이번 달 목표: ${goals.month}`;
+  return `너는 주니어 테니스 선수를 지도하는 전문 코치야. 아래 선수의 훈련 기록을 분석하고 따뜻하면서도 구체적인 피드백을 한국어로 줘.\n\n선수: ${profile.name} (${profile.grade}, ${profile.style}, 주손 ${profile.hand})${goalCtx}\n기간: ${kind==='today'?'오늘':kind==='week'?'최근 1주일':'최근 1개월'}\n\n훈련 기록:\n${summary}\n\n다음 형식으로 작성해:\n[강점]\n- (2가지)\n\n[개선점]\n- (2가지)\n\n[다음 훈련 추천]\n- (2~3가지 구체적 조언)\n\n추천 유튜브 영상이 있으면 검색 키워드도 알려줘.`;
+}
+function openCoachClaude(){
+  const kind=($$('#coach-type button.on')[0]||{}).dataset?.k||'today';
+  const today=todayISO();
+  let recent;
   if(kind==='today')recent=logs.filter(l=>l.date===today);
   else{
     const days=kind==='week'?7:30;
@@ -840,48 +924,52 @@ async function generateCoaching(){
     recent=logs.filter(l=>new Date(l.date+'T00:00:00')>=cut);
   }
   if(!recent.length){toast('분석할 훈련 기록이 없어요');return;}
-  const summary=recent.map(l=>`- ${l.date} | ${l.name} | ${l.duration}분 | 컨디션 ${l.condition}/5 | ${(l.tags||[]).join(',')}${l.notes?' | '+l.notes:''}`).join('\n');
-  const prompt=`너는 주니어 테니스 선수를 지도하는 전문 코치야. 아래 선수의 훈련 기록을 분석하고 따뜻하면서도 구체적인 피드백을 한국어로 줘.\n\n선수: ${profile.name} (${profile.grade}, ${profile.style}, 주손 ${profile.hand})\n기간: ${kind==='today'?'오늘':kind==='week'?'최근 1주일':'최근 1개월'}\n\n훈련 기록:\n${summary}\n\n다음 형식으로 작성해:\n[강점]\n- (2가지)\n\n[개선점]\n- (2가지)\n\n[다음 훈련 추천]\n- (2~3가지 구체적 조언)`;
-
-  const res=$('#coach-result');
-  res.innerHTML='<div class="empty">분석 중...</div>';
+  const prompt=buildCoachPrompt();
+  navigator.clipboard.writeText(prompt).catch(()=>{});
+  window.open('https://claude.ai/new?q='+encodeURIComponent(prompt),'_blank');
+  toast('Claude를 열었어요. 분석 결과를 복사해오세요');
+}
+async function pasteCoachClipboard(){
   try{
-    const r=await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:600,messages:[{role:"user",content:prompt}]})
-    });
-    if(!r.ok){res.innerHTML='<div class="empty" style="color:var(--danger);">요청 실패. 다시 시도해주세요.</div>';return;}
-    const data=await r.json();
-    const text=(data.content&&data.content[0]&&data.content[0].text)||'분석에 실패했어요.';
-    coachNotes.push({id:Date.now().toString(36),date:today,kind,text});
-    save(K.coach,coachNotes);
-    res.innerHTML=`<div class="coach"><div class="cx">${esc(text)}</div></div>`;
-    renderCoachList();renderSearch();
-    toast('분석을 저장했어요');
-  }catch(e){
-    res.innerHTML='<div class="empty" style="color:var(--danger);">오류: '+esc(e.message)+'</div>';
-  }
+    const t=await navigator.clipboard.readText();
+    if(t&&t.trim()){$('#coach-paste').value=t.trim();toast('붙여넣었어요. 저장을 눌러주세요');}
+    else toast('클립보드가 비어 있어요');
+  }catch(e){toast('직접 붙여넣어 주세요');$('#coach-paste').focus();}
+}
+function saveCoach(){
+  const kind=($$('#coach-type button.on')[0]||{}).dataset?.k||'today';
+  const text=$('#coach-paste').value.trim();
+  if(!text){toast('분석 결과를 붙여넣어 주세요');return;}
+  coachNotes.push({id:Date.now().toString(36),date:todayISO(),kind,text});
+  save(K.coach,coachNotes);
+  closeModal('m-coach');
+  renderCoachList();renderSearch();
+  toast('AI 분석을 저장했어요');
 }
 
 /* ========== ENGLISH ========== */
 function nextGrade(g){const o=['초4','초5','초6','중1','중2','중3','고1','고2','고3'];const i=o.indexOf(g);return i>-1&&i<o.length-1?o[i+1]:'수능';}
 function buildEngPrompt(){
   const ng=nextGrade(profile.grade);
-  return `너는 한국 중·고등 영어 교육 전문가야. 아래 조건에 맞는 영어 학습 문장을 만들어줘.\n\n- 학습자: ${profile.grade} 수준\n- 어휘: ${profile.grade} 교육과정 핵심 단어와 ${ng} 과정 주요 단어 중심. 각 문장마다 핵심 단어 1~3개를 words 배열에 표시\n- 문법: ${profile.grade} 교육과정에서 자주 다루는 문법을 다양하게 섞어서\n- 문장 수: 5개\n- 주제: ${profile.grade} 학생이 흥미로워할 다양한 일상 소재(학교, 친구, 음식, 게임, 음악, 여행, 동물, 과학 상식, SNS 등). 스포츠는 최대 1문장\n- 자연스럽고 재미있는 실용 문장으로\n\n반드시 아래 JSON 배열 형식으로만 출력(설명·코드블록 없이):\n[{"en":"영어","ko":"한국어","words":[{"w":"단어","mean":"뜻"}]}]`;
+  const unitVal=($('#eng-unit')||{}).value||'random';
+  const count=(($$('#eng-count button.on')[0]||{}).dataset?.v)||'5';
+  const unitLine=unitVal==='random'
+    ? `- 문법 단원: ${profile.grade} 교육과정에서 자주 다루는 문법을 무작위로 다양하게 섞어서 (매번 다르게)`
+    : `- 문법 단원: ${unitVal}`;
+  return `너는 한국 중·고등 영어 교육 전문가야. 아래 조건에 맞는 영어 학습 문장을 만들어줘.\n\n- 학습자: ${profile.grade} 수준\n- 어휘: ${profile.grade} 교육과정 핵심 단어와 ${ng} 과정 주요 단어 중심. 각 문장마다 꼭 외워야 할 핵심 단어 1~3개를 words 배열에 표시\n${unitLine}\n- 문장 수: ${count}개\n- 주제: ${profile.grade} 학생이 흥미로워할 다양한 일상 소재(학교, 친구, 음식, 게임, 음악, 여행, 동물, 과학 상식, SNS 등). 스포츠는 최대 1~2문장\n- 자연스럽고 재미있는 실용 문장으로 (교과서처럼 딱딱하지 않게)\n\n반드시 아래 JSON 배열 형식으로만 출력(설명·코드블록 없이):\n[{"en":"영어","ko":"한국어","words":[{"w":"단어","mean":"뜻"}]}]`;
 }
-async function generateEnglish(){
+function openEngGenerate(){
   if(!profile){toast('선수 정보를 등록해주세요');return;}
-  toast('문장을 생성하고 있어요...');
-  try{
-    const r=await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:buildEngPrompt()}]})
-    });
-    if(!r.ok){toast('요청 실패. 직접 만들기를 이용해주세요');return;}
-    const data=await r.json();
-    const text=(data.content&&data.content[0]&&data.content[0].text)||'';
-    saveEngFromText(text);
-  }catch(e){toast('오류: '+e.message);}
+  $('#eng-paste').value='';
+  $$('#eng-count button').forEach((b,i)=>b.classList.toggle('on',i===0));
+  if($('#eng-unit'))$('#eng-unit').value='random';
+  openModal('m-eng-paste');
+}
+function openEngClaude(){
+  const prompt=buildEngPrompt();
+  navigator.clipboard.writeText(prompt).catch(()=>{});
+  window.open('https://claude.ai/new?q='+encodeURIComponent(prompt),'_blank');
+  toast('Claude를 열었어요. 결과를 복사해오세요');
 }
 function saveEngFromText(raw){
   let parsed;
@@ -893,20 +981,14 @@ function saveEngFromText(raw){
     words:Array.isArray(x.words)?x.words.filter(w=>w&&w.w).map(w=>({w:String(w.w),mean:String(w.mean||'')})):[]
   }));
   if(!items.length){toast('문장을 찾을 수 없어요');return false;}
-  engSets.unshift({id:Date.now().toString(36),date:todayISO(),unit:'AI 생성',items});
+  const unitVal=($('#eng-unit')||{}).value||'random';
+  const unitName=unitVal==='random'?'랜덤':unitVal;
+  engSets.unshift({id:Date.now().toString(36),date:todayISO(),unit:unitName,items});
   save(K.eng,engSets);
   selectedEngDay=todayISO();
   renderEnglish();renderSearch();
   toast('영어 문장을 저장했어요');
   return true;
-}
-function openEngManual(){
-  const prompt=buildEngPrompt();
-  navigator.clipboard.writeText(prompt).catch(()=>{});
-  window.open('https://claude.ai/new?q='+encodeURIComponent(prompt),'_blank');
-  $('#eng-paste').value='';
-  openModal('m-eng-paste');
-  toast('Claude를 열었어요. 결과를 붙여넣어 주세요');
 }
 async function pasteEngClipboard(){
   try{
@@ -1055,6 +1137,11 @@ function buildGuardianText(){
   const goal=dailyGoals[today];
   let t=`🎾 ${profile.name} 선수 훈련 일지\n📅 ${fmtDate(today)}\n\n`;
   if(goal)t+=`[오늘 목표]\n${goal}\n\n`;
+  const longGoals=[];
+  if(goals.month)longGoals.push(`${monthLabel()}: ${goals.month}`);
+  if(goals.year)longGoals.push(`${yearLabel()}: ${goals.year}`);
+  if(goals.final)longGoals.push(`최종 목표: ${goals.final}`);
+  if(longGoals.length)t+='[목표]\n'+longGoals.join('\n')+'\n\n';
   if(jlog.length){
     t+='[훈련 내용]\n';
     jlog.forEach(l=>{
@@ -1116,7 +1203,7 @@ function doRestore(e){
       if(!confirm('현재 데이터를 백업 내용으로 덮어쓸까요?'))return;
       profile=d.profile;logs=d.logs||[];engSets=d.engSets||[];coachNotes=d.coachNotes||[];
       guardian=d.guardian||null;routines=d.routines||{};routineChecks=d.routineChecks||{};
-      goals=d.goals||{final:''};if(!goals.final&&profile.goal)goals.final=profile.goal;
+      goals=Object.assign({month:'',year:'',final:''},d.goals||{});if(!goals.final&&profile.goal)goals.final=profile.goal;
       dailyGoals=d.dailyGoals||{};matchMode=!!d.matchMode;
       save(K.profile,profile);save(K.logs,logs);save(K.eng,engSets);save(K.coach,coachNotes);
       save(K.guardian,guardian);save(K.routines,routines);save(K.rchecks,routineChecks);
@@ -1175,9 +1262,11 @@ function bindEvents(){
   });
   $$('#j-tags button').forEach(b=>b.onclick=()=>b.classList.toggle('on'));
 
-  // 코칭
+  // 코칭 (Claude 열기 + 붙여넣기 방식)
   $('#btn-coach').onclick=openCoach;
-  $('#coach-gen').onclick=generateCoaching;
+  $('#coach-open').onclick=openCoachClaude;
+  $('#coach-paste-clip').onclick=pasteCoachClipboard;
+  $('#coach-save').onclick=saveCoach;
   $$('#coach-type button').forEach(b=>b.onclick=()=>{$$('#coach-type button').forEach(x=>x.classList.remove('on'));b.classList.add('on');});
 
   // 보호자
@@ -1185,11 +1274,12 @@ function bindEvents(){
   $('#guardian-share').onclick=shareGuardian;
   $('#guardian-copy').onclick=copyGuardian;
 
-  // 영어
-  $('#btn-gen-eng').onclick=generateEnglish;
-  $('#btn-eng-manual').onclick=openEngManual;
+  // 영어 (개수 선택 + Claude 열기 + 붙여넣기 방식)
+  $('#btn-gen-eng').onclick=openEngGenerate;
+  $('#eng-open-claude').onclick=openEngClaude;
   $('#eng-paste-btn').onclick=pasteEngClipboard;
   $('#eng-paste-save').onclick=saveEngPaste;
+  $$('#eng-count button').forEach(b=>b.onclick=()=>{$$('#eng-count button').forEach(x=>x.classList.remove('on'));b.classList.add('on');buzz();});
 
   // 검색
   $('#sc-kw').oninput=doSearch;
