@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>테니스일지</title>
+<meta name="theme-color" content="#100F0D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="테니스일지">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+:root{--bg:#100F0D;--card:#1A1916;--elev:#211F1B;--line:#2A2824;--accent:#C6D64B;--on-accent:#16170A;
+  --t1:#F0EDE6;--t2:#A8A399;--t3:#8A857B;--t4:#54504A;--danger:#E89086;--safe-bottom:env(safe-area-inset-bottom,0px);
+  --serif:"Nanum Myeongjo",serif;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--t1);
+  font-family:"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;
+  -webkit-font-smoothing:antialiased;}
+button,input,select,textarea{font-family:inherit;}button{cursor:pointer;border:none;background:none;color:inherit;}
+.hidden{display:none!important;}
+.app-wrap{max-width:480px;margin:0 auto;min-height:100vh;position:relative;background:var(--bg);}
+
+/* onboarding */
+#onboarding{padding:max(28px,env(safe-area-inset-top)) 22px 40px;min-height:100vh;display:flex;flex-direction:column;justify-content:center;}
+.ob-logo{width:56px;height:56px;border-radius:50%;background:var(--elev);display:flex;align-items:center;justify-content:center;margin-bottom:18px;}
+.ob-logo svg{width:30px;height:30px;}
+#onboarding h1{font-family:var(--serif);font-size:28px;font-weight:800;margin:0 0 8px;}
+#onboarding p.sub{color:var(--t3);font-size:14px;margin:0 0 28px;line-height:1.5;}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:13px;color:var(--t2);margin-bottom:7px;}
+.field input,.field select{width:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--t1);font-size:15px;outline:none;}
+.field input:focus,.field select:focus{border-color:var(--accent);}
+.field input::placeholder{color:var(--t4);}
+.seg{display:flex;gap:8px;}
+.seg button{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 0;color:var(--t2);font-size:14px;transition:.12s;}
+.seg button.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:600;}
+.btn-primary{width:100%;background:var(--accent);color:var(--on-accent);border-radius:24px;padding:16px;font-size:16px;font-weight:600;margin-top:8px;}
+.btn-primary:active{transform:scale(.99);}
+.btn-ghost{width:100%;background:var(--card);border:1px solid var(--line);color:var(--t2);border-radius:24px;padding:14px;font-size:15px;margin-top:10px;}
+.btn-ghost:active{background:var(--elev);}
+.row-2{display:flex;gap:10px;}.row-2 .field{flex:1;}
+
+/* main app */
+#app{padding-bottom:calc(90px + var(--safe-bottom));}
+.screen{display:none;padding:18px;}
+.screen.active{display:block;}
+.topbar{display:flex;align-items:center;gap:12px;padding:max(16px,env(safe-area-inset-top)) 0 16px;}
+.avatar{width:46px;height:46px;border-radius:50%;background:var(--elev);display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:16px;font-weight:600;}
+.topbar .who{flex:1;}
+.topbar .nm{font-family:var(--serif);font-size:21px;font-weight:800;}
+.topbar .meta{font-size:12px;color:var(--t3);margin-top:4px;}
+.icon-btn{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:22px;}
+.icon-btn:active{background:var(--card);}
+
+.goal-card{background:linear-gradient(135deg,rgba(198,214,75,.18),rgba(198,214,75,.03));border:1px solid rgba(198,214,75,.32);border-radius:18px;padding:18px 20px;margin-bottom:18px;}
+.goal-label{font-size:11px;color:var(--accent);letter-spacing:1.5px;font-weight:700;}
+.goal-text{font-family:var(--serif);font-size:21px;font-weight:800;color:var(--t1);margin-top:7px;}
+.goal-empty{font-size:13px;color:var(--t3);margin-top:7px;}
+
+.sec-head{display:flex;justify-content:space-between;align-items:center;margin:20px 0 12px;}
+.sec-head .t{font-family:var(--serif);font-size:17px;font-weight:700;}
+.sec-head .p{font-size:13px;color:var(--t3);}
+
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.stat{background:var(--card);border-radius:14px;padding:14px 16px;}
+.stat .lbl{color:var(--t3);font-size:11px;}
+.stat .val{font-family:var(--serif);font-size:26px;font-weight:700;margin-top:6px;}
+
+.rmode-seg{display:flex;gap:8px;margin-bottom:14px;}
+.rmode-seg button{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 0;color:var(--t2);font-size:13px;}
+.rmode-seg button.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
+
+.routine-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;}
+.routine-item{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:12px;padding:11px 10px;font-size:12px;color:var(--t2);}
+.routine-item.done{background:rgba(198,214,75,.12);color:var(--t1);}
+.routine-check{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;}
+.routine-item.done .routine-check{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
+.routine-progress{font-size:12px;color:var(--t3);}
+
+.log{background:var(--card);border-radius:14px;padding:15px 16px;margin-bottom:10px;border-left:2px solid var(--accent);cursor:pointer;}
+.log:active{background:var(--elev);}
+.log .lh{display:flex;justify-content:space-between;align-items:center;}
+.log .lt{font-size:15px;font-weight:500;}
+.log .ls{font-size:13px;color:var(--accent);}
+.log .lm{font-size:12px;color:var(--t3);margin-top:5px;}
+.log .ln{font-size:13px;color:var(--t2);margin-top:9px;line-height:1.55;}
+.ltags{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap;}
+.tag{font-size:11px;padding:3px 10px;border-radius:20px;background:var(--elev);color:var(--t2);}
+.empty{text-align:center;color:var(--t4);font-size:13px;padding:40px 0;line-height:1.7;}
+
+.btn-wide{width:100%;background:var(--accent);color:var(--on-accent);border-radius:14px;padding:14px;font-size:15px;font-weight:600;margin-top:12px;}
+.btn-wide:active{transform:scale(.98);}
+
+.day-strip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 14px;scrollbar-width:none;}
+.day-strip::-webkit-scrollbar{display:none;}
+.day-cell{flex:0 0 auto;width:52px;padding:9px 0;border-radius:12px;background:var(--card);border:1px solid transparent;text-align:center;cursor:pointer;}
+.day-cell .dw{font-size:11px;color:var(--t3);}
+.day-cell .dd{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--t1);margin-top:2px;}
+.day-cell.has::after{content:"";position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--accent);}
+.day-cell.sel{background:var(--accent);}
+.day-cell.sel .dw{color:var(--on-accent);}
+.day-cell.sel .dd{color:var(--on-accent);}
+
+.eng-card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:10px;}
+.eng-card .en{font-size:15px;color:var(--t1);line-height:1.5;}
+.eng-card .ko{font-size:13px;color:var(--t3);margin-top:6px;}
+.en-row{display:flex;align-items:flex-start;gap:8px;}
+.en-row .en{flex:1;}
+.spk{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--elev);font-size:14px;display:flex;align-items:center;justify-content:center;margin-top:-2px;cursor:pointer;}
+.spk:active{background:rgba(198,214,75,.2);}
+.word-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.word-chip{display:inline-flex;align-items:center;gap:4px;background:var(--elev);border:1px solid var(--line);border-radius:16px;padding:6px 11px;font-size:12px;color:var(--t2);cursor:pointer;}
+
+.cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.cal-nav button{width:32px;height:32px;border-radius:50%;background:var(--card);color:var(--t2);font-size:16px;cursor:pointer;}
+.cal-nav .title{font-family:var(--serif);font-size:16px;font-weight:700;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:12px;}
+.cal-day-header{text-align:center;font-size:11px;color:var(--t3);padding:8px 0;}
+.cal-day{aspect-ratio:1;border-radius:10px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--t2);border:1px solid transparent;cursor:pointer;}
+.cal-day.other{color:var(--t4);}
+.cal-day.has::after{content:"";position:absolute;bottom:2px;width:3px;height:3px;border-radius:50%;background:var(--accent);}
+.cal-day.sel{background:var(--accent);color:var(--on-accent);}
+
+#sc-keyword,#sc-from,#sc-to{width:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--t1);font-size:15px;outline:none;margin-bottom:10px;}
+#sc-keyword:focus,#sc-from:focus,#sc-to:focus{border-color:var(--accent);}
+.sc-date-row{display:flex;gap:10px;align-items:center;margin-bottom:10px;}
+.sc-date-row input{flex:1;}
+.sc-count{font-size:12px;color:var(--t3);margin-bottom:12px;}
+
+.prow{display:flex;justify-content:space-between;align-items:center;padding:15px 0;border-bottom:1px solid var(--line);}
+.prow:last-child{border-bottom:none;}
+.prow .pl{font-size:14px;color:var(--t2);}
+.prow .pv{font-size:14px;color:var(--t3);}
+.group{background:var(--card);border-radius:14px;padding:2px 16px;margin-bottom:14px;}
+.group-title{font-size:12px;color:var(--t4);margin:18px 4px 8px;}
+
+/* bottom nav */
+.nav{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(16,15,13,.95);
+  backdrop-filter:blur(12px);padding:12px 18px calc(12px + var(--safe-bottom));z-index:40;display:flex;gap:8px;justify-content:center;}
+.nav button{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 0;
+  color:var(--t2);font-size:14px;font-weight:600;cursor:pointer;transition:.12s;}
+.nav button.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
+.nav button:active{transform:scale(.98);}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:60;display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:.2s;}
+.modal.open{opacity:1;pointer-events:auto;}
+.sheet{background:var(--bg);width:100%;max-width:480px;max-height:92vh;overflow-y:auto;border-radius:22px 22px 0 0;
+  padding:8px 20px calc(28px + var(--safe-bottom));transform:translateY(30px);transition:.2s;}
+.modal.open .sheet{transform:translateY(0);}
+.grip{width:38px;height:4px;background:var(--line);border-radius:3px;margin:8px auto 16px;}
+.sheet h2{font-family:var(--serif);font-size:22px;font-weight:800;margin:2px 0 20px;}
+.stars{display:flex;gap:6px;margin-bottom:12px;}
+.stars button{font-size:30px;color:var(--t4);cursor:pointer;}
+.stars button.on{color:var(--accent);}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.chips button{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:8px 14px;color:var(--t2);font-size:13px;cursor:pointer;}
+.chips button.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
+.field textarea{width:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 14px;
+  color:var(--t1);font-size:15px;outline:none;resize:vertical;min-height:90px;line-height:1.5;margin-bottom:10px;}
+.field textarea:focus{border-color:var(--accent);}
+
+/* toast */
+.toast{position:fixed;bottom:calc(76px + var(--safe-bottom));left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--elev);color:var(--t1);padding:12px 20px;border-radius:24px;font-size:14px;
+  box-shadow:0 6px 20px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:.25s;z-index:80;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+h1,h2{font-family:var(--serif);}
+</style>
+</head>
+<body>
+<div class="app-wrap">
+
+<!-- ONBOARDING -->
+<div id="onboarding">
+  <div class="ob-logo">
+    <svg viewBox="0 0 512 512"><circle cx="256" cy="256" r="150" fill="none" stroke="#C6D64B" stroke-width="28"/><path d="M256 106 Q176 256 256 406 M256 106 Q336 256 256 406" fill="none" stroke="#C6D64B" stroke-width="20"/></svg>
+  </div>
+  <h1>선수 등록</h1>
+  <p class="sub">선수 정보를 등록하면 학년에 맞는 영어 학습과<br>맞춤 AI 코칭 분석을 받을 수 있어요.</p>
+  <div class="field">
+    <label>이름</label>
+    <input id="ob-name" type="text" placeholder="이서연" autocomplete="off">
+  </div>
+  <div class="row-2">
+    <div class="field">
+      <label>학교</label>
+      <input id="ob-school" type="text" placeholder="서초중" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>학년</label>
+      <select id="ob-grade">
+        <option value="초4">초4</option><option value="초5">초5</option><option value="초6">초6</option>
+        <option value="중1">중1</option><option value="중2" selected>중2</option><option value="중3">중3</option>
+        <option value="고1">고1</option><option value="고2">고2</option><option value="고3">고3</option>
+      </select>
+    </div>
+  </div>
+  <div class="field">
+    <label>주 사용 손</label>
+    <div class="seg" id="ob-hand">
+      <button data-v="오른손" class="on">오른손</button>
+      <button data-v="왼손">왼손</button>
+    </div>
+  </div>
+  <div class="field">
+    <label>플레이 스타일</label>
+    <select id="ob-style">
+      <option>베이스라이너</option><option>올라운더</option><option>서브 앤 발리어</option><option>카운터펀처</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>최종 목표 <span style="color:var(--t4)">(선택)</span></label>
+    <input id="ob-goal" type="text" placeholder="국가대표 · 프로 진출" autocomplete="off">
+  </div>
+  <button class="btn-primary" onclick="completeOnboarding()">시작하기</button>
+  <button class="btn-ghost hidden" id="ob-cancel" onclick="cancelEditProfile()">취소</button>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+
+<!-- SCREEN 1: 일지쓰기 -->
+<section class="screen active" id="screen-journal">
+  <div class="topbar">
+    <div class="avatar" id="ja-avatar">서</div>
+    <div class="who">
+      <div class="nm" id="ja-name">선수명</div>
+      <div class="meta" id="ja-meta">학교 학년</div>
+    </div>
+    <button class="icon-btn" onclick="goProfile()">⚙</button>
+  </div>
+
+  <button class="goal-card" onclick="editGoal()" style="text-align:left;width:100%;cursor:pointer;">
+    <div class="goal-label">오늘 목표</div>
+    <div id="goal-today-text" class="goal-empty">목표를 설정해주세요</div>
+  </button>
+
+  <div class="sec-head"><span class="t">오늘의 루틴</span><span class="routine-progress" id="routine-progress"></span></div>
+  <div class="rmode-seg">
+    <button data-m="normal" class="on" onclick="setMatchMode(false)">평상시</button>
+    <button data-m="match" onclick="setMatchMode(true)">시합기간</button>
+  </div>
+  <div id="routine-wrap"></div>
+
+  <div class="sec-head"><span class="t">훈련일지</span></div>
+  <button class="btn-wide" style="background:var(--card);color:var(--t1);border:1px solid var(--line);" onclick="openJournal()">훈련일지 작성</button>
+  <div id="journal-list" style="margin-top:12px;"></div>
+
+  <div class="sec-head" style="margin-top:20px;"><span class="t">AI 코칭 분석</span></div>
+  <div id="coaching-list"></div>
+
+  <button class="btn-wide" onclick="openGuardian()">보호자에게 전송</button>
+</section>
+
+<!-- SCREEN 2: 영어공부 -->
+<section class="screen" id="screen-english">
+  <div class="topbar">
+    <div class="avatar">A</div>
+    <div class="who">
+      <div class="nm">영어공부</div>
+      <div class="meta">학년 맞춤 문장</div>
+    </div>
+  </div>
+
+  <button class="btn-wide" onclick="generateTodayEnglish()">오늘의 영어 문장 생성</button>
+
+  <div class="sec-head" style="margin-top:20px;"><span class="t">작성한 문장</span></div>
+  <div class="day-strip" id="eng-day-strip"></div>
+  <div id="eng-list"></div>
+</section>
+
+<!-- SCREEN 3: 검색 -->
+<section class="screen" id="screen-search">
+  <div class="topbar">
+    <div class="avatar">🔍</div>
+    <div class="who">
+      <div class="nm">기록 검색</div>
+      <div class="meta">일지·영어·분석</div>
+    </div>
+  </div>
+
+  <label style="display:block;font-size:13px;color:var(--t2);margin-bottom:7px;margin-top:12px;">검색어</label>
+  <input id="sc-keyword" type="text" placeholder="훈련 내용 검색...">
+
+  <label style="display:block;font-size:13px;color:var(--t2);margin-bottom:7px;">날짜 범위</label>
+  <div class="sc-date-row">
+    <input id="sc-from" type="date">
+    <span style="color:var(--t3);">~</span>
+    <input id="sc-to" type="date">
+  </div>
+  <div class="sc-count">검색 결과: <b id="sc-result-count">0</b>개</div>
+
+  <div class="sec-head"><span class="t">월별 캘린더</span></div>
+  <div id="calendar-wrap"></div>
+
+  <div class="sec-head"><span class="t">결과</span></div>
+  <div id="search-results"></div>
+</section>
+
+<!-- SCREEN 4: 프로필 -->
+<section class="screen" id="screen-profile">
+  <div class="topbar">
+    <div class="avatar">⚙</div>
+    <div class="who">
+      <div class="nm">설정</div>
+      <div class="meta">선수 정보</div>
+    </div>
+  </div>
+  <div id="profile-info"></div>
+  <div class="group">
+    <div class="group-title">데이터</div>
+    <button class="prow" onclick="doBackup()">
+      <span class="pl">백업 내보내기</span>
+      <span class="pv">→</span>
+    </button>
+    <button class="prow" onclick="document.getElementById('restore-input').click()">
+      <span class="pl">백업 가져오기</span>
+      <span class="pv">→</span>
+    </button>
+    <input id="restore-input" type="file" style="display:none;" onchange="doRestore(event)" accept=".json">
+  </div>
+  <button class="btn-ghost" onclick="editProfile()">선수 정보 수정</button>
+  <button class="btn-ghost" style="color:var(--danger);" onclick="resetAll()">모든 데이터 삭제</button>
+</section>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="nav">
+  <button class="on" onclick="switchTab('journal')">일지쓰기</button>
+  <button onclick="switchTab('english')">영어공부</button>
+  <button onclick="switchTab('search')">검색</button>
+</div>
+
+<!-- MODALS -->
+
+<!-- 훈련일지 모달 -->
+<div class="modal" id="m-journal">
+  <div class="sheet">
+    <div class="grip"></div>
+    <h2 id="journal-title">훈련일지 작성</h2>
+    <div class="field">
+      <label>날짜</label>
+      <input id="journal-date" type="date">
+    </div>
+    <div class="field">
+      <label>훈련 제목</label>
+      <input id="journal-name" type="text" placeholder="예: 서브 연습" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>훈련 시간 (분)</label>
+      <input id="journal-duration" type="number" placeholder="0" min="0">
+    </div>
+    <div class="field">
+      <label>컨디션</label>
+      <div class="stars" id="journal-stars">
+        <button data-v="1">★</button>
+        <button data-v="2">★</button>
+        <button data-v="3">★</button>
+        <button data-v="4">★</button>
+        <button data-v="5">★</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>태그</label>
+      <div class="chips" id="journal-tags">
+        <button>서브</button><button>리턴</button><button>포핸드</button><button>백핸드</button>
+        <button>발리</button><button>풋웍</button><button>체력</button><button>멘탈</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>메모</label>
+      <textarea id="journal-notes" placeholder="훈련 중 느낀 점..."></textarea>
+    </div>
+    <button class="btn-wide" onclick="saveJournal()">저장</button>
+    <button class="btn-ghost" onclick="closeModal('m-journal')">취소</button>
+    <button class="btn-ghost" style="color:var(--danger);" id="journal-del" class="hidden" onclick="deleteJournal()">삭제</button>
+  </div>
+</div>
+
+<!-- 목표 모달 -->
+<div class="modal" id="m-goal">
+  <div class="sheet">
+    <div class="grip"></div>
+    <h2>오늘 목표</h2>
+    <div class="field">
+      <label>목표를 입력하세요</label>
+      <textarea id="goal-text" placeholder="예: 서브 정확도 향상" style="min-height:80px;"></textarea>
+    </div>
+    <button class="btn-wide" onclick="saveGoal()">저장</button>
+    <button class="btn-ghost" onclick="closeModal('m-goal')">취소</button>
+  </div>
+</div>
+
+<!-- AI 코칭 모달 -->
+<div class="modal" id="m-coaching">
+  <div class="sheet">
+    <div class="grip"></div>
+    <h2>AI 코칭 분석</h2>
+    <div class="field">
+      <label>분석 대상</label>
+      <div class="chips">
+        <button class="on" data-kind="today">오늘</button>
+        <button data-kind="week">이번 주</button>
+        <button data-kind="month">이번 달</button>
+      </div>
+    </div>
+    <button class="btn-wide" onclick="generateCoaching()">분석 생성</button>
+    <div id="coaching-result" style="margin-top:16px;"></div>
+    <button class="btn-ghost" onclick="closeModal('m-coaching')">닫기</button>
+  </div>
+</div>
+
+<!-- 보호자 전송 모달 -->
+<div class="modal" id="m-guardian">
+  <div class="sheet">
+    <div class="grip"></div>
+    <h2>보호자에게 전송</h2>
+    <div id="guardian-text" style="background:var(--card);border-radius:12px;padding:14px;margin-bottom:12px;font-size:13px;color:var(--t2);line-height:1.6;white-space:pre-wrap;max-height:300px;overflow-y:auto;"></div>
+    <button class="btn-wide" onclick="copyGuardian()">내용 복사</button>
+    <button class="btn-ghost" onclick="closeModal('m-guardian')">닫기</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+</div>
+
+<script>
+const K={profile:'tj-profile',logs:'tj-logs',eng:'tj-eng',coach:'tj-coach',guardian:'tj-guardian',
+  routines:'tj-routines',rchecks:'tj-rchecks',goals:'tj-goals',dailyGoals:'tj-dailyGoals',matchMode:'tj-matchMode'};
+let profile,logs=[],engSets=[],coachNotes=[],guardian=null,routines={},routineChecks={},
+    goals={final:''},dailyGoals={},matchMode=false,editingJournalId=null,selectedEngDay,currentCalMonth=new Date();
+
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const load=k=>{const v=localStorage.getItem(k);return v?JSON.parse(v):null;};
+const esc=s=>{const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;};
+const todayISO=()=>new Date().toLocaleDateString('en-CA');
+const fmtDate=d=>d?d.slice(5).replace('-','/'):'-';
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);};
+const buzz=()=>'vibrate'in navigator&&navigator.vibrate(30);
+const buzz0=()=>{};
+
+function initData(){
+  profile=load(K.profile);logs=load(K.logs)||[];engSets=load(K.eng)||[];coachNotes=load(K.coach)||[];
+  guardian=load(K.guardian);routines=load(K.routines)||{};routineChecks=load(K.rchecks)||{};
+  goals=load(K.goals)||{final:''};dailyGoals=load(K.dailyGoals)||{};matchMode=!!load(K.matchMode);
+  selectedEngDay=todayISO();
+}
+
+function completeOnboarding(){
+  const name=$('#ob-name').value.trim(),school=$('#ob-school').value.trim(),
+        grade=$('#ob-grade').value,hand=$$('#ob-hand button.on')[0]?.dataset.v||'오른손',
+        style=$('#ob-style').value,goal=$('#ob-goal').value.trim();
+  if(!name||!school){toast('이름과 학교를 입력해주세요');return;}
+  profile={name,school,grade,hand,style,goal};goals.final=goal;
+  save(K.profile,profile);save(K.goals,goals);
+  $('#onboarding').classList.add('hidden');$('#app').classList.remove('hidden');
+  renderAll();
+}
+
+function renderAll(){
+  if(!profile)return;
+  const init=profile.name.split('')[0];
+  $$('.avatar')[0].textContent=init;
+  $('#ja-name').textContent=profile.name+' 선수';
+  $('#ja-meta').textContent=`${profile.school} ${profile.grade}`;
+  renderJournal();renderEnglish();renderSearch();renderProfile();
+}
+
+function renderProfile(){
+  $('#profile-info').innerHTML=`
+    <div class="prow"><span class="pl">이름</span><span class="pv">${esc(profile.name)}</span></div>
+    <div class="prow"><span class="pl">학교</span><span class="pv">${esc(profile.school)}</span></div>
+    <div class="prow"><span class="pl">학년</span><span class="pv">${esc(profile.grade)}</span></div>
+    <div class="prow"><span class="pl">손</span><span class="pv">${esc(profile.hand)}</span></div>
+    <div class="prow"><span class="pl">스타일</span><span class="pv">${esc(profile.style)}</span></div>
+    <div class="prow"><span class="pl">목표</span><span class="pv">${esc(goals.final||'미설정')}</span></div>`;
+}
+
+function renderJournal(){
+  const today=todayISO();
+  const goal=dailyGoals[today];
+  $('#goal-today-text').className=goal?'goal-text':'goal-empty';
+  $('#goal-today-text').textContent=goal||'목표를 설정해주세요';
+
+  renderRoutine();
+
+  const jlist=$('#journal-list');
+  const jlogs=logs.filter(l=>l.date===today).sort((a,b)=>b.id.localeCompare(a.id));
+  jlist.innerHTML=jlogs.length?jlogs.map(l=>`
+    <div class="log" onclick="editJournal('${l.id}')">
+      <div class="lh"><span class="lt">${esc(l.name)}</span><span class="ls">${l.condition||0}★</span></div>
+      <div class="lm">${fmtDate(l.date)}${l.duration?' · '+l.duration+'분':''}</div>
+      ${l.notes?'<div class="ln">'+esc(l.notes).substring(0,60)+'</div>':''}
+      ${l.tags&&l.tags.length?'<div class="ltags">'+l.tags.map(t=>'<span class="tag">'+esc(t)+'</span>').join('')+'</div>':''}
+    </div>`).join(''):'<div class="empty">훈련일지가 없어요</div>';
+
+  const clist=$('#coaching-list');
+  const coach=coachNotes.filter(c=>c.date===today);
+  clist.innerHTML=coach.length?coach.map(c=>`
+    <div style="background:var(--card);border-radius:14px;padding:14px;margin-bottom:10px;border-left:2px solid var(--accent);">
+      <div style="font-size:12px;color:var(--accent);font-weight:600;margin-bottom:8px;">AI 분석</div>
+      <div style="font-size:13px;color:var(--t2);line-height:1.6;white-space:pre-wrap;">${esc(c.text).substring(0,200)}</div>
+    </div>`).join(''):'<div class="empty" style="padding:20px 0;">AI 분석이 없어요</div>';
+}
+
+function renderRoutine(){
+  const wrap=$('#routine-wrap');
+  const prog=$('#routine-progress');
+  const dayKey=getDayKey();
+  const list=routines[dayKey]||[];
+
+  if(!list.length){
+    prog.textContent='';wrap.innerHTML='<div class="empty">루틴을 설정해주세요</div>';return;
+  }
+
+  const today=todayISO();
+  const checked=(routineChecks[today]||[]).map(x=>x.id);
+  const done=checked.length;
+  prog.textContent=done===list.length?'완료 ✓':`${done}/${list.length}`;
+
+  wrap.innerHTML=`<div class="routine-grid">${list.map(r=>{
+    const on=checked.includes(r.id);
+    return `<button class="routine-item ${on?'done':''}" onclick="toggleRoutine('${r.id}')">
+      <span class="routine-check">${on?'✓':''}</span>${esc(r.name)}
+    </button>`;
+  }).join('')}</div>`;
+}
+
+function toggleRoutine(id){
+  const today=todayISO();
+  const dayKey=getDayKey();
+  const list=routines[dayKey]||[];
+  const r=list.find(x=>x.id===id);if(!r)return;
+  const arr=routineChecks[today]?[...routineChecks[today]]:[];
+  const i=arr.findIndex(x=>x.id===id);
+  if(i===-1)arr.push({id:r.id,name:r.name});
+  else arr.splice(i,1);
+  routineChecks[today]=arr.length?arr:undefined;
+  save(K.rchecks,routineChecks);buzz();renderJournal();
+}
+
+function getDayKey(){
+  const d=new Date();const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  return days[d.getDay()];
+}
+
+function setMatchMode(is){
+  matchMode=is;save(K.matchMode,matchMode);
+  $$('.rmode-seg button').forEach(b=>b.classList.toggle('on',(b.dataset.m==='match')===is));
+  renderRoutine();
+}
+
+function renderEnglish(){
+  const dstrip=$('#eng-day-strip');
+  let h='';
+  for(let i=0;i<10;i++){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const ds=d.toLocaleDateString('en-CA');
+    const has=engSets.some(e=>e.date===ds);
+    const sel=ds===selectedEngDay;
+    h+=`<button class="day-cell ${sel?'sel':''} ${has?'has':''}" onclick="selectEngDay('${ds}')">
+      <div class="dw">${['일','월','화','수','목','금','토'][d.getDay()]}</div>
+      <div class="dd">${d.getDate()}</div>
+    </button>`;
+  }
+  dstrip.innerHTML=h;
+
+  const elist=$('#eng-list');
+  const eng=engSets.filter(e=>e.date===selectedEngDay);
+  elist.innerHTML=eng.length?eng.map(s=>`
+    <div style="margin-top:12px;">
+      <div class="sec-head" style="margin:0 0 12px;"><span class="t" style="font-size:14px;">${fmtDate(s.date)} · ${esc(s.unit)}</span></div>
+      ${s.items.map(it=>`
+        <div class="eng-card">
+          <div class="en-row"><div class="en">"${esc(it.en)}"</div><button class="spk" onclick="speak('${encodeURIComponent(it.en)}')">🔊</button></div>
+          <div class="ko">${esc(it.ko)}</div>
+          ${it.words&&it.words.length?'<div class="word-chips">'+it.words.map(w=>'<button class="word-chip">'+esc(w.w)+' <i>'+esc(w.mean)+'</i></button>').join('')+'</div>':''}
+        </div>`).join('')}
+    </div>
+    <button class="btn-ghost" style="color:var(--t3);margin-top:8px;" onclick="deleteEngSet('${s.id}')">삭제</button>`).join(''):'<div class="empty">문장이 없어요</div>';
+}
+
+function selectEngDay(d){selectedEngDay=d;buzz();renderEnglish();}
+
+function renderSearch(){
+  renderCalendar();doSearch();
+}
+
+function renderCalendar(){
+  const y=currentCalMonth.getFullYear(),m=currentCalMonth.getMonth();
+  const wrap=$('#calendar-wrap');
+  let h=`<div class="cal-nav"><button onclick="prevMonth()">◀</button>
+    <span class="title">${y}년 ${m+1}월</span><button onclick="nextMonth()">▶</button></div><div class="cal-grid">`;
+  ['일','월','화','수','목','금','토'].forEach(d=>h+=`<div class="cal-day-header">${d}</div>`);
+
+  const f=new Date(y,m,1),l=new Date(y,m+1,0);
+  for(let i=0;i<f.getDay();i++)h+=`<div class="cal-day other"></div>`;
+  for(let d=1;d<=l.getDate();d++){
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const has=logs.some(l=>l.date===ds)||coachNotes.some(c=>c.date===ds)||engSets.some(e=>e.date===ds);
+    h+=`<button class="cal-day ${has?'has':''}" onclick="selectCalDate('${ds}')">${d}</button>`;
+  }
+  for(let i=l.getDay();i<6;i++)h+=`<div class="cal-day other"></div>`;
+  h+='</div>';
+  wrap.innerHTML=h;
+}
+
+function prevMonth(){currentCalMonth.setMonth(currentCalMonth.getMonth()-1);renderCalendar();}
+function nextMonth(){currentCalMonth.setMonth(currentCalMonth.getMonth()+1);renderCalendar();}
+function selectCalDate(d){$('#sc-from').value=d;$('#sc-to').value=d;buzz();renderCalendar();doSearch();}
+
+function doSearch(){
+  const kw=$('#sc-keyword').value.trim().toLowerCase();
+  const fr=$('#sc-from').value,to=$('#sc-to').value;
+  let res=[];
+
+  logs.forEach(l=>{
+    if(fr&&l.date<fr)return;if(to&&l.date>to)return;
+    if(kw){const h=(l.name||'')+(l.notes||'')+(l.tags||[]).join(' ');if(!h.toLowerCase().includes(kw))return;}
+    res.push({type:'log',data:l});
+  });
+
+  engSets.forEach(s=>s.items.forEach(it=>{
+    if(fr&&s.date<fr)return;if(to&&s.date>to)return;
+    if(kw){const h=it.en+' '+it.ko;if(!h.toLowerCase().includes(kw))return;}
+    res.push({type:'eng',data:it,date:s.date});
+  }));
+
+  coachNotes.forEach(c=>{
+    if(fr&&c.date<fr)return;if(to&&c.date>to)return;
+    if(kw&&!c.text.toLowerCase().includes(kw))return;
+    res.push({type:'coach',data:c});
+  });
+
+  res.sort((a,b)=>(b.data.date||b.date).localeCompare(a.data.date||a.date));
+
+  $('#sc-result-count').textContent=res.length;
+  const sr=$('#search-results');
+  sr.innerHTML=res.length?res.map(r=>{
+    if(r.type==='log')return `<div class="log" onclick="editJournal('${r.data.id}')">
+      <div class="lh"><span class="lt">${esc(r.data.name)}</span><span class="ls">${r.data.condition||0}★</span></div>
+      <div class="lm">${fmtDate(r.data.date)}${r.data.duration?' · '+r.data.duration+'분':''}</div></div>`;
+    else if(r.type==='eng')return `<div class="eng-card"><div class="en">"${esc(r.data.en)}"</div><div class="ko">${esc(r.data.ko)}</div></div>`;
+    else return `<div style="background:var(--card);border-radius:14px;padding:14px;margin-bottom:10px;"><div style="font-size:12px;color:var(--accent);margin-bottom:6px;">AI 분석</div><div style="font-size:13px;color:var(--t2);white-space:pre-wrap;">${esc(r.data.text).substring(0,150)}</div></div>`;
+  }).join(''):'<div class="empty">결과가 없어요</div>';
+}
+
+function openJournal(){
+  editingJournalId=null;
+  $('#journal-title').textContent='훈련일지 작성';
+  $('#journal-date').value=todayISO();
+  $('#journal-name').value='';
+  $('#journal-duration').value='';
+  $('#journal-notes').value='';
+  $$('#journal-stars button').forEach(b=>b.classList.remove('on'));
+  $$('#journal-tags button').forEach(b=>b.classList.remove('on'));
+  $('#journal-del').classList.add('hidden');
+  openModal('m-journal');
+}
+
+function editJournal(id){
+  const l=logs.find(x=>x.id===id);if(!l)return;
+  editingJournalId=id;
+  $('#journal-title').textContent='훈련일지 수정';
+  $('#journal-date').value=l.date;
+  $('#journal-name').value=l.name||'';
+  $('#journal-duration').value=l.duration||'';
+  $('#journal-notes').value=l.notes||'';
+  $$('#journal-stars button').forEach(b=>b.classList.toggle('on',+b.dataset.v<=(l.condition||0)));
+  $$('#journal-tags button').forEach(b=>b.classList.toggle('on',(l.tags||[]).includes(b.textContent)));
+  $('#journal-del').classList.remove('hidden');
+  openModal('m-journal');
+}
+
+function saveJournal(){
+  const date=$('#journal-date').value||todayISO();
+  const name=$('#journal-name').value.trim();
+  if(!name){toast('제목을 입력하세요');return;}
+  const dur=+$('#journal-duration').value||0;
+  const cond=$$('#journal-stars button.on').length||0;
+  const tags=$$('#journal-tags button.on').map(b=>b.textContent);
+  const notes=$('#journal-notes').value.trim();
+  const data={date,name,duration:dur,condition:cond,tags,notes};
+  if(editingJournalId){const i=logs.findIndex(x=>x.id===editingJournalId);if(i>-1)logs[i]={...logs[i],...data};}
+  else logs.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),...data});
+  save(K.logs,logs);renderJournal();closeModal('m-journal');toast('저장했어요');
+}
+
+function deleteJournal(){
+  if(!editingJournalId||!confirm('삭제할까요?'))return;
+  logs=logs.filter(x=>x.id!==editingJournalId);save(K.logs,logs);
+  closeModal('m-journal');renderJournal();toast('삭제했어요');
+}
+
+function editGoal(){openModal('m-goal');$('#goal-text').value=dailyGoals[todayISO()]||'';}
+function saveGoal(){
+  const v=$('#goal-text').value.trim();
+  if(v)dailyGoals[todayISO()]=v;
+  else delete dailyGoals[todayISO()];
+  save(K.dailyGoals,dailyGoals);closeModal('m-goal');renderJournal();toast('저장했어요');
+}
+
+async function generateTodayEnglish(){
+  if(!profile){toast('선수 정보를 등록하세요');return;}
+  toast('생성 중...');
+  const ng=nextGrade(profile.grade);
+  const prompt=`${profile.grade} 수준의 영어 학습자를 위해 5개의 문장을 만들어줘. 각 문장은 자연스럽고 흥미로워야 해.\n형식: [{"en":"영문","ko":"한글","words":[{"w":"단어","mean":"뜻"}]}]\n JSON만 반환해.`;
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:800,messages:[{role:"user",content:prompt}]})});
+    if(!res.ok){toast('요청 실패');return;}
+    const data=await res.json();
+    const text=data.content[0]?.text||'';
+    let parsed=JSON.parse(text.replace(/```json|```/g,'').trim());
+    if(!Array.isArray(parsed)||!parsed.length){toast('오류');return;}
+    const items=parsed.filter(x=>x&&x.en).map(x=>({en:String(x.en),ko:String(x.ko||''),
+      words:Array.isArray(x.words)?x.words.filter(w=>w&&w.w).map(w=>({w:String(w.w),mean:String(w.mean||'')})):[]}));
+    if(!items.length){toast('오류');return;}
+    engSets.unshift({id:Date.now().toString(36),date:todayISO(),unit:'생성',items});
+    save(K.eng,engSets);renderEnglish();toast('생성했어요!');
+  }catch(e){toast('오류: '+e.message);}
+}
+
+function nextGrade(g){const o=['초4','초5','초6','중1','중2','중3','고1','고2','고3'];const i=o.indexOf(g);return i>-1&&i<o.length-1?o[i+1]:'고3';}
+
+function speak(enc){
+  try{const t=decodeURIComponent(enc);
+    if('speechSynthesis'in window){speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(t);u.lang='en-US';speechSynthesis.speak(u);}}catch(e){}
+}
+
+function deleteEngSet(id){
+  if(!confirm('삭제할까요?'))return;
+  engSets=engSets.filter(s=>s.id!==id);save(K.eng,engSets);renderEnglish();
+}
+
+async function generateCoaching(){
+  if(!profile){toast('선수 정보를 등록하세요');return;}
+  const kind=$$('#m-coaching .chips button.on')[0]?.dataset.kind||'today';
+  const today=todayISO();
+  let recent;
+  if(kind==='today')recent=logs.filter(l=>l.date===today);
+  else if(kind==='week'){const c=new Date();c.setDate(c.getDate()-7);recent=logs.filter(l=>new Date(l.date+'T00:00')>=c);}
+  else{const c=new Date();c.setDate(c.getDate()-30);recent=logs.filter(l=>new Date(l.date+'T00:00')>=c);}
+  if(!recent.length){toast('훈련 기록이 없어요');return;}
+  const sum=recent.map(l=>`- ${l.date} ${l.name} ${l.duration}분 컨디션 ${l.condition}/5`).join('\n');
+  const prompt=`${profile.name}(${profile.grade}, ${profile.style})의 ${kind==='today'?'오늘':kind==='week'?'이번 주':'이번 달'} 테니스 훈련:\n${sum}\n\n【강점】\n• \n【개선점】\n• \n【조언】\n• `;
+  const res=$('#coaching-result');res.innerHTML='분석 중...';
+  try{
+    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:400,messages:[{role:"user",content:prompt}]})});
+    if(!r.ok){res.innerHTML='오류';return;}
+    const d=await r.json();const t=d.content[0]?.text||'오류';
+    coachNotes.push({id:Date.now().toString(),date:today,kind,text:t});save(K.coach,coachNotes);
+    res.innerHTML=`<div style="background:var(--card);border-radius:12px;padding:14px;font-size:13px;color:var(--t2);line-height:1.6;white-space:pre-wrap;">${esc(t)}</div>`;
+    renderJournal();
+  }catch(e){res.innerHTML='오류: '+e.message;}
+}
+
+function openGuardian(){
+  const today=todayISO();
+  const jlog=logs.filter(l=>l.date===today);
+  const coach=coachNotes.filter(c=>c.date===today);
+  let t=`${profile.name} 선수의 훈련 기록\n날짜: ${fmtDate(today)}\n\n`;
+  if(jlog.length){t+='【훈련】\n';jlog.forEach(l=>{t+=`- ${l.name} (${l.duration}분, 컨디션 ${l.condition}/5)\n`;if(l.tags?.length)t+=`  ${l.tags.join(', ')}\n`;if(l.notes)t+=`  ${l.notes}\n`;});}
+  if(coach.length){t+='【AI 분석】\n';coach.forEach(c=>t+=c.text+'\n');}
+  $('#guardian-text').textContent=t;openModal('m-guardian');
+}
+
+function copyGuardian(){navigator.clipboard.writeText($('#guardian-text').textContent).then(()=>toast('복사했어요'));}
+
+function editProfile(){
+  $('#ob-name').value=profile.name;$('#ob-school').value=profile.school;$('#ob-grade').value=profile.grade;
+  $('#ob-style').value=profile.style;$('#ob-goal').value=goals.final||'';
+  $$('#ob-hand button').forEach(b=>b.classList.toggle('on',b.dataset.v===profile.hand));
+  $('#onboarding h1').textContent='선수 정보 수정';
+  $('#onboarding .btn-primary').textContent='저장';
+  $('#onboarding .btn-primary').onclick=()=>completeOnboarding();
+  $('#ob-cancel').classList.remove('hidden');
+  $('#app').classList.add('hidden');$('#onboarding').classList.remove('hidden');
+}
+
+function cancelEditProfile(){$('#onboarding').classList.add('hidden');$('#app').classList.remove('hidden');}
+function goProfile(){switchTab('profile');}
+
+function doBackup(){
+  const d={app:'tennis-journal',version:4,exportedAt:new Date().toISOString(),profile,logs,engSets,coachNotes,guardian,routines,routineChecks,goals,dailyGoals,matchMode};
+  const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+  const u=URL.createObjectURL(b);const a=document.createElement('a');
+  a.href=u;a.download=`테니스일지_${profile.name}_${todayISO().replace(/-/g,'')}.json`;a.click();
+  URL.revokeObjectURL(u);toast('내보냈어요');
+}
+
+function doRestore(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=()=>{
+    try{const d=JSON.parse(r.result);if(!d.profile){toast('잘못된 파일');return;}
+      if(!confirm('데이터를 덮어쓸까요?'))return;
+      profile=d.profile;logs=d.logs||[];engSets=d.engSets||[];coachNotes=d.coachNotes||[];
+      guardian=d.guardian||null;routines=d.routines||{};routineChecks=d.routineChecks||{};
+      goals=d.goals||{final:''};dailyGoals=d.dailyGoals||{};matchMode=!!d.matchMode;
+      Object.values(K).forEach(k=>save(k,eval(k.slice(3))));
+      toast('복원했어요');renderAll();switchTab('journal');
+    }catch(x){toast('오류');}};r.readAsText(f);e.target.value='';}
+
+function resetAll(){if(!confirm('모든 데이터를 삭제할까요?'))return;Object.values(K).forEach(k=>localStorage.removeItem(k));location.reload();}
+
+function switchTab(t){
+  $$('.screen').forEach(s=>s.classList.remove('active'));
+  $$('.nav button').forEach(b=>b.classList.remove('on'));
+  const m={journal:'screen-journal',english:'screen-english',search:'screen-search',profile:'screen-profile'};
+  if(m[t])$(`.screen#${m[t]}`).classList.add('active');
+  const ni={journal:0,english:1,search:2};
+  if(ni[t]!==undefined)$$('.nav button')[ni[t]].classList.add('on');
+}
+
+function openModal(id){$(id).classList.add('open');}
+function closeModal(id){$(id).classList.remove('open');}
+
+$$('#journal-stars button').forEach(b=>b.addEventListener('click',function(){
+  $$('#journal-stars button').forEach(x=>x.classList.remove('on'));
+  const v=+this.dataset.v;$$('#journal-stars button').forEach(x=>{if(+x.dataset.v<=v)x.classList.add('on');});
+}));
+
+$$('#journal-tags button').forEach(b=>b.addEventListener('click',function(){this.classList.toggle('on');}));
+
+$$('#m-coaching .chips button').forEach(b=>b.addEventListener('click',function(){
+  $$('#m-coaching .chips button').forEach(x=>x.classList.remove('on'));this.classList.add('on');
+}));
+
+$('#sc-keyword').addEventListener('input',doSearch);
+$('#sc-from').addEventListener('change',doSearch);
+$('#sc-to').addEventListener('change',doSearch);
+
+initData();
+if(!profile){$('#onboarding').classList.remove('hidden');$('#app').classList.add('hidden');}
+else{$('#onboarding').classList.add('hidden');$('#app').classList.remove('hidden');renderAll();}
+
+if('serviceWorker'in navigator)window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});
+</script>
+</body>
+</html>
