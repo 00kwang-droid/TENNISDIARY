@@ -1,4 +1,4 @@
-const CACHE='tennis-journal-v20';
+const CACHE='tennis-journal-v30';
 
 const ASSETS=[
   './',
@@ -16,7 +16,11 @@ self.addEventListener('install',e=>{
 });
 
 self.addEventListener('activate',e=>{
-  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
+  e.waitUntil(
+    caches.keys()
+      .then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))
+      .then(()=>self.clients.claim())
+  );
 });
 
 self.addEventListener('fetch',e=>{
@@ -26,9 +30,20 @@ self.addEventListener('fetch',e=>{
   if(url.origin!==self.location.origin)return;
   const isPage=req.mode==='navigate'||req.destination==='document';
   if(isPage){
-    e.respondWith(fetch(req).then(res=>{const copy=res.clone();caches.open(CACHE).then(c=>c.put('./index.html',copy));return res;})
-      .catch(()=>caches.match('./index.html').then(r=>r||caches.match('./'))));
+    e.respondWith(
+      fetch(req).then(res=>{
+        const copy=res.clone();
+        caches.open(CACHE).then(c=>c.put('./index.html',copy));
+        return res;
+      }).catch(()=>caches.match('./index.html').then(r=>r||caches.match('./')))
+    );
     return;
   }
-  e.respondWith(caches.match(req).then(cached=>cached||fetch(req).then(res=>{const copy=res.clone();caches.open(CACHE).then(c=>c.put(req,copy));return res;}).catch(()=>cached)));
+  e.respondWith(
+    caches.match(req).then(cached=>cached||fetch(req).then(res=>{
+      const copy=res.clone();
+      caches.open(CACHE).then(c=>c.put(req,copy));
+      return res;
+    }).catch(()=>cached))
+  );
 });
