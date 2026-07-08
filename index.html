@@ -394,6 +394,7 @@ h1,h2{font-family:var(--serif);}
       </div>
     </div>
     <div class="field"><label>메모</label><textarea id="j-notes" placeholder="어려웠던 점, 개선할 점..."></textarea></div>
+    <div class="field"><label>내일 연습 목표 <span style="color:var(--t4)">(내일 '오늘 목표'로 표시돼요)</span></label><textarea id="j-tomorrow" placeholder="예: 서브 토스 안정시키기" style="min-height:60px;"></textarea></div>
     <button class="btn-wide" id="j-save">저장</button>
     <button class="del-link hidden" id="j-del">이 기록 삭제</button>
   </div>
@@ -517,6 +518,11 @@ const $$=s=>Array.from(document.querySelectorAll(s));
 const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 const load=k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}};
 const esc=s=>{const d=document.createElement('div');d.textContent=(s==null?'':String(s));return d.innerHTML;};
+const escLink=s=>{
+  // 먼저 HTML 이스케이프 후, URL을 클릭 가능한 링크로 변환
+  const escaped=esc(s);
+  return escaped.replace(/(https?:\/\/[^\s<]+)/g,u=>`<a href="${u}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline;word-break:break-all;">${u}</a>`);
+};
 const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 const isoOf=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const fmtDate=d=>d?d.slice(5).replace('-','/'):'-';
@@ -812,6 +818,7 @@ function renderJournalList(){
       <div class="lh"><span class="lt">${esc(l.name)}</span><span class="ls">${l.condition?'★'+l.condition:''}</span></div>
       <div class="lm">${fmtDate(l.date)}${l.duration?' · '+l.duration+'분':''}</div>
       ${l.notes?`<div class="ln">${esc(l.notes)}</div>`:''}
+      ${l.tomorrow?`<div class="ln" style="color:var(--accent);">→ 내일 목표: ${esc(l.tomorrow)}</div>`:''}
       ${(l.tags&&l.tags.length)?`<div class="ltags">${l.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`:''}
     </button>`).join('');
   $$('#journal-list .log').forEach(el=>el.onclick=()=>openEditJournal(el.dataset.id));
@@ -823,6 +830,7 @@ function openNewJournal(){
   $('#j-name').value='';
   $('#j-dur').value='';
   $('#j-notes').value='';
+  $('#j-tomorrow').value='';
   $$('#j-stars button').forEach(b=>b.classList.remove('on'));
   $$('#j-tags button').forEach(b=>b.classList.remove('on'));
   $('#j-del').classList.add('hidden');
@@ -836,11 +844,17 @@ function openEditJournal(id){
   $('#j-name').value=l.name||'';
   $('#j-dur').value=l.duration||'';
   $('#j-notes').value=l.notes||'';
+  $('#j-tomorrow').value=l.tomorrow||'';
   const c=l.condition||0;
   $$('#j-stars button').forEach(b=>b.classList.toggle('on',+b.dataset.v<=c));
   $$('#j-tags button').forEach(b=>b.classList.toggle('on',(l.tags||[]).includes(b.textContent)));
   $('#j-del').classList.remove('hidden');
   openModal('m-journal');
+}
+function nextDayISO(iso){
+  const d=new Date(iso+'T00:00:00');
+  d.setDate(d.getDate()+1);
+  return isoOf(d);
 }
 function saveJournal(){
   const date=$('#j-date').value||todayISO();
@@ -850,7 +864,8 @@ function saveJournal(){
   const condition=$$('#j-stars button.on').length;
   const tags=$$('#j-tags button.on').map(b=>b.textContent);
   const notes=$('#j-notes').value.trim();
-  const data={date,name,duration,condition,tags,notes};
+  const tomorrow=$('#j-tomorrow').value.trim();
+  const data={date,name,duration,condition,tags,notes,tomorrow};
   if(editingJournalId){
     const i=logs.findIndex(x=>x.id===editingJournalId);
     if(i>-1)logs[i]={...logs[i],...data};
@@ -858,8 +873,14 @@ function saveJournal(){
     logs.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),...data});
   }
   save(K.logs,logs);
+  // 내일 연습 목표를 다음 날 '오늘 목표'로 자동 설정
+  if(tomorrow){
+    const nd=nextDayISO(date);
+    dailyGoals[nd]=tomorrow;
+    save(K.dailyGoals,dailyGoals);
+  }
   closeModal('m-journal');
-  renderJournalList();renderSearch();
+  renderJournalList();renderGoal();renderSearch();
   toast(editingJournalId?'수정했어요':'훈련일지를 저장했어요');
 }
 function deleteJournal(){
@@ -882,7 +903,7 @@ function renderCoachList(){
     <div class="coach">
       <button class="cdel" data-id="${c.id}">삭제</button>
       <div class="ct">${c.kind==='month'?'이번 달':c.kind==='week'?'이번 주':'오늘'} 분석</div>
-      <div class="cx">${esc(c.text)}</div>
+      <div class="cx">${escLink(c.text)}</div>
     </div>`).join('');
   $$('#coach-list .cdel').forEach(b=>b.onclick=()=>deleteCoach(b.dataset.id));
 }
@@ -911,7 +932,7 @@ function buildCoachPrompt(){
   if(goals.final)goalCtx+=`\n최종 목표: ${goals.final}`;
   if(goals.year)goalCtx+=`\n올해 목표: ${goals.year}`;
   if(goals.month)goalCtx+=`\n이번 달 목표: ${goals.month}`;
-  return `너는 주니어 테니스 선수를 지도하는 전문 코치야. 아래 선수의 훈련 기록을 분석하고 따뜻하면서도 구체적인 피드백을 한국어로 줘.\n\n선수: ${profile.name} (${profile.grade}, ${profile.style}, 주손 ${profile.hand})${goalCtx}\n기간: ${kind==='today'?'오늘':kind==='week'?'최근 1주일':'최근 1개월'}\n\n훈련 기록:\n${summary}\n\n다음 형식으로 작성해:\n[강점]\n- (2가지)\n\n[개선점]\n- (2가지)\n\n[다음 훈련 추천]\n- (2~3가지 구체적 조언)\n\n추천 유튜브 영상이 있으면 검색 키워드도 알려줘.`;
+  return `너는 주니어 테니스 선수를 지도하는 전문 코치야. 아래 선수의 훈련 기록을 분석하고 따뜻하면서도 구체적인 피드백을 한국어로 줘.\n\n선수: ${profile.name} (${profile.grade}, ${profile.style}, 주손 ${profile.hand})${goalCtx}\n기간: ${kind==='today'?'오늘':kind==='week'?'최근 1주일':'최근 1개월'}\n\n훈련 기록:\n${summary}\n\n[중요] 전체 답변은 휴대폰 화면 한 장에 들어갈 정도로 짧고 간결하게 써줘 (전체 400자 이내). 각 항목은 1줄씩, 핵심만.\n\n다음 형식으로 작성해:\n[강점]\n- (1~2가지, 짧게)\n\n[개선점]\n- (1~2가지, 짧게)\n\n[다음 훈련 추천]\n- (1~2가지, 짧게)\n\n[추천 영상]\n- 선수에게 도움될 유튜브 영상을 실제 전체 URL(https://www.youtube.com/watch?v=... 형태)로 1~2개 바로 붙여줘. 키워드가 아니라 클릭하면 바로 열리는 링크로.`;
 }
 function openCoachClaude(){
   const kind=($$('#coach-type button.on')[0]||{}).dataset?.k||'today';
@@ -1006,7 +1027,8 @@ function renderEnglish(){
   // day strip
   const strip=$('#eng-strip');
   let h='';
-  for(let i=0;i<14;i++){
+  // 왼쪽이 과거, 오른쪽이 오늘이 되도록 오래된 날짜부터
+  for(let i=13;i>=0;i--){
     const d=new Date();d.setDate(d.getDate()-i);
     const ds=isoOf(d);
     const has=engSets.some(e=>e.date===ds);
@@ -1015,6 +1037,8 @@ function renderEnglish(){
   }
   strip.innerHTML=h;
   $$('#eng-strip .day-cell').forEach(el=>el.onclick=()=>{selectedEngDay=el.dataset.d;buzz();renderEnglish();});
+  // 오른쪽 끝(오늘)이 보이도록 스크롤
+  strip.scrollLeft=strip.scrollWidth;
 
   // list
   const el=$('#eng-list');
@@ -1080,7 +1104,7 @@ function doSearch(){
   let res=[];
   logs.forEach(l=>{
     if(!inRange(l.date))return;
-    if(kw){const hay=((l.name||'')+' '+(l.notes||'')+' '+(l.tags||[]).join(' ')).toLowerCase();if(!hay.includes(kw))return;}
+    if(kw){const hay=((l.name||'')+' '+(l.notes||'')+' '+(l.tomorrow||'')+' '+(l.tags||[]).join(' ')).toLowerCase();if(!hay.includes(kw))return;}
     res.push({t:'log',date:l.date,data:l});
   });
   engSets.forEach(s=>{
@@ -1095,7 +1119,12 @@ function doSearch(){
     if(kw&&!c.text.toLowerCase().includes(kw))return;
     res.push({t:'coach',date:c.date,data:c});
   });
-  res.sort((a,b)=>b.date.localeCompare(a.date));
+  // 타입 순서: 훈련일지(log) → AI분석(coach) → 영어(eng), 각 타입 내에서는 최신순
+  const typeOrder={log:0,coach:1,eng:2};
+  res.sort((a,b)=>{
+    if(typeOrder[a.t]!==typeOrder[b.t])return typeOrder[a.t]-typeOrder[b.t];
+    return b.date.localeCompare(a.date);
+  });
 
   const hasFilter=kw||from||to;
   $('#sc-count').innerHTML=hasFilter?`검색 결과 <b>${res.length}</b>건`:'';
@@ -1109,13 +1138,13 @@ function doSearch(){
         <div class="lh"><span class="lt">${esc(l.name)}</span><span class="ls">${l.condition?'★'+l.condition:''}</span></div>
         <div class="lm">${fmtDate(l.date)}${l.duration?' · '+l.duration+'분':''}</div>
         ${l.notes?`<div class="ln">${esc(l.notes)}</div>`:''}</button>`;
-    }else if(r.t==='eng'){
+    }else if(r.t==='coach'){
+      return `<div class="coach"><span class="result-tag">AI 분석</span>
+        <div class="lm" style="font-size:11px;color:var(--t4);margin-bottom:6px;">${fmtDate(r.date)} · ${r.data.kind==='month'?'이번 달':r.data.kind==='week'?'이번 주':'오늘'}</div>
+        <div class="cx">${escLink(r.data.text)}</div></div>`;
+    }else{
       return `<div class="eng-card"><span class="result-tag">영어</span>
         <div class="en">${esc(r.data.en)}</div><div class="ko">${esc(r.data.ko)}</div>
-        <div class="lm" style="font-size:11px;color:var(--t4);margin-top:6px;">${fmtDate(r.date)}</div></div>`;
-    }else{
-      return `<div class="coach"><span class="result-tag">AI 분석</span>
-        <div class="cx">${esc(r.data.text).substring(0,180)}${r.data.text.length>180?'...':''}</div>
         <div class="lm" style="font-size:11px;color:var(--t4);margin-top:6px;">${fmtDate(r.date)}</div></div>`;
     }
   }).join('');
